@@ -2,13 +2,17 @@ import { supabaseClient } from "./supabase-client.js";
 
 const invoiceViewContent = document.getElementById("invoiceViewContent");
 
-function getIdFromQuery() {
+function getInvoiceId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("id");
 }
 
+function money(value, currency = "USD") {
+  return `${currency} ${Number(value || 0).toFixed(2)}`;
+}
+
 async function init() {
-  const invoiceId = getIdFromQuery();
+  const invoiceId = getInvoiceId();
 
   if (!invoiceId) {
     invoiceViewContent.innerHTML = "<p>Missing invoice ID.</p>";
@@ -17,59 +21,59 @@ async function init() {
 
   const {
     data: { session }
-  } = await supabase.auth.getSession();
+  } = await supabaseClient.auth.getSession();
 
   if (!session) {
     window.location.href = "/login.html";
     return;
   }
 
-  const { data, error } = await supabase
+  const { data: invoice, error } = await supabaseClient
     .from("invoices")
     .select("*")
     .eq("id", invoiceId)
     .single();
 
-  if (error || !data) {
+  if (error || !invoice) {
     invoiceViewContent.innerHTML = `<p>${error?.message || "Invoice not found."}</p>`;
     return;
   }
 
-  const lineItems = Array.isArray(data.line_items) ? data.line_items : [];
-  const rows = lineItems.map(item => `
+  const rows = (invoice.line_items || []).map(item => `
     <tr>
       <td>${item.description || ""}</td>
       <td>${item.quantity || 0}</td>
-      <td>${Number(item.unit_price || 0).toFixed(2)}</td>
-      <td>${Number(item.amount || 0).toFixed(2)}</td>
+      <td>${money(item.unit_price, invoice.currency)}</td>
+      <td>${money(item.amount, invoice.currency)}</td>
     </tr>
   `).join("");
 
   invoiceViewContent.innerHTML = `
-    <div class="invoice-header">
-      <div>
-        <h1>Invoice</h1>
-        <p><strong>No:</strong> ${data.invoice_number}</p>
-        <p><strong>Status:</strong> ${data.status}</p>
+    <div class="invoice-head">
+      <div class="invoice-brand">
+        <h1>INVOICE</h1>
+        <p><strong>Invoice No:</strong> ${invoice.invoice_number}</p>
+        <p><strong>Status:</strong> ${invoice.status}</p>
       </div>
-      <div>
-        <p><strong>Issue Date:</strong> ${data.issue_date || ""}</p>
-        <p><strong>Due Date:</strong> ${data.due_date || ""}</p>
+
+      <div class="invoice-meta">
+        <p><strong>Issue Date:</strong> ${invoice.issue_date || "-"}</p>
+        <p><strong>Due Date:</strong> ${invoice.due_date || "-"}</p>
       </div>
     </div>
 
-    <div class="invoice-section">
+    <div class="invoice-section invoice-billto">
       <h3>Bill To</h3>
-      <p>${data.client_name || ""}</p>
-      <p>${data.client_company || ""}</p>
-      <p>${data.client_email || ""}</p>
-      <p>${data.client_phone || ""}</p>
-      <p>${data.client_address || ""}</p>
+      <p><strong>${invoice.client_name || ""}</strong></p>
+      <p>${invoice.client_company || ""}</p>
+      <p>${invoice.client_email || ""}</p>
+      <p>${invoice.client_phone || ""}</p>
+      <p>${invoice.client_address || ""}</p>
     </div>
 
     <div class="invoice-section">
-      <h3>Items</h3>
-      <table class="data-table">
+      <h3>Invoice Items</h3>
+      <table class="invoice-table">
         <thead>
           <tr>
             <th>Description</th>
@@ -78,25 +82,39 @@ async function init() {
             <th>Amount</th>
           </tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody>
+          ${rows || `<tr><td colspan="4">No line items</td></tr>`}
+        </tbody>
       </table>
     </div>
 
-    <div class="invoice-totals">
-      <p><strong>Subtotal:</strong> ${data.currency} ${Number(data.subtotal).toFixed(2)}</p>
-      <p><strong>Tax:</strong> ${data.currency} ${Number(data.tax).toFixed(2)}</p>
-      <p><strong>Discount:</strong> ${data.currency} ${Number(data.discount).toFixed(2)}</p>
-      <p><strong>Total:</strong> ${data.currency} ${Number(data.total).toFixed(2)}</p>
+    <div class="invoice-summary">
+      <div class="invoice-summary-row">
+        <span>Subtotal</span>
+        <span>${money(invoice.subtotal, invoice.currency)}</span>
+      </div>
+      <div class="invoice-summary-row">
+        <span>Tax</span>
+        <span>${money(invoice.tax, invoice.currency)}</span>
+      </div>
+      <div class="invoice-summary-row">
+        <span>Discount</span>
+        <span>${money(invoice.discount, invoice.currency)}</span>
+      </div>
+      <div class="invoice-summary-row total">
+        <span>Total</span>
+        <span>${money(invoice.total, invoice.currency)}</span>
+      </div>
     </div>
 
-    <div class="invoice-section">
+    <div class="invoice-section invoice-terms">
       <h3>Payment Terms</h3>
-      <p>${data.payment_terms || "-"}</p>
+      <p>${invoice.payment_terms || "-"}</p>
     </div>
 
-    <div class="invoice-section">
+    <div class="invoice-section invoice-notes">
       <h3>Notes</h3>
-      <p>${data.notes || "-"}</p>
+      <p>${invoice.notes || "-"}</p>
     </div>
   `;
 }
