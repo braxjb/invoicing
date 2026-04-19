@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice | Serendib Escapes Elite</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/invoice-view.css" />
+</head>
+<body>
+  <main class="invoice-page">
+    <section class="invoice-sheet" id="invoicePrintArea">
+      <div id="invoiceViewContent">Loading invoice...</div>
+    </section>
+
+    <div class="invoice-toolbar">
+      <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+      <a href="/invoices.html" class="btn btn-secondary">Back to Invoices</a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./js/invoice-view.js"></script>
+</body>
+</html>

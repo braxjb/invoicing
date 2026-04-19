@@ -201,7 +201,7 @@ async function loadInvoices() {
       <td>
         <button class="btn btn-secondary action-edit" data-id="${invoice.id}">Edit</button>
         <button class="btn btn-danger action-delete" data-id="${invoice.id}">Delete</button>
-        <a class="btn btn-secondary" href="/invoice-view.html?id=${invoice.id}" target="_blank">View</a>
+        <a class="btn btn-secondary" href="/invoice.html?id=${invoice.id}" target="_blank">View</a>
       </td>
     </tr>
   `).join("");
