@@ -1,0 +1,9 @@
+{
+  "name": "invoice-tool",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "resend": "^4.1.2"
+  }
+}
