@@ -1,8 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: Number(process.env.SMTP_PORT) === 465,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
 
 function money(value, currency = "USD") {
   return `${currency} ${Number(value || 0).toFixed(2)}`;
@@ -10,7 +18,7 @@ function money(value, currency = "USD") {
 
 async function buildInvoicePdf(invoice) {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([595.28, 841.89]); // A4
+  const page = pdfDoc.addPage([595.28, 841.89]);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
@@ -157,8 +165,6 @@ async function buildInvoicePdf(invoice) {
     rowY -= 20;
   });
 
-  const summaryTop = rowY - 30;
-
   const drawSummary = (label, value, isTotal = false) => {
     page.drawText(label, {
       x: 365,
@@ -235,6 +241,7 @@ async function buildInvoicePdf(invoice) {
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
 }
+
 export async function handler(event) {
   try {
     if (event.httpMethod !== "POST") {
@@ -255,6 +262,13 @@ export async function handler(event) {
     }
 
     const { invoiceId } = JSON.parse(event.body || "{}");
+
+    if (!invoiceId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing invoice ID" })
+      };
+    }
 
     const supabase = createClient(
       process.env.SUPABASE_URL,
@@ -300,41 +314,69 @@ export async function handler(event) {
       };
     }
 
-    const pdfBuffer = await buildInvoicePdf(invoice);
-
-    const emailResult = await resend.emails.send({
-      from: process.env.EMAIL_FROM,
-      to: invoice.client_email,
-      subject: `Invoice ${invoice.invoice_number}`,
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;">
-          <p>Dear ${invoice.client_name},</p>
-          <p>Please find your invoice attached as a PDF.</p>
-          <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
-          <p><strong>Total:</strong> ${money(invoice.total, invoice.currency)}</p>
-          <p><strong>Due Date:</strong> ${invoice.due_date || "-"}</p>
-        </div>
-      `,
-      attachments: [
-        {
-          filename: `${invoice.invoice_number}.pdf`,
-          content: pdfBuffer.toString("base64")
-        }
-      ]
-    });
-
-    if (emailResult.error) {
+    if (invoice.sent_at || invoice.status === "sent") {
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: emailResult.error.message || "Failed to send email" })
+        statusCode: 409,
+        body: JSON.stringify({ error: "This invoice has already been sent." })
       };
     }
+
+    await supabase
+      .from("invoices")
+      .update({
+        last_email_attempt_at: new Date().toISOString(),
+        last_email_error: null
+      })
+      .eq("id", invoice.id);
+
+    const pdfBuffer = await buildInvoicePdf(invoice);
+
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: invoice.client_email,
+        subject: `Invoice ${invoice.invoice_number}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;">
+            <p>Dear ${invoice.client_name},</p>
+            <p>Please find your invoice attached.</p>
+            <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
+            <p><strong>Total:</strong> ${money(invoice.total, invoice.currency)}</p>
+            <p><strong>Due Date:</strong> ${invoice.due_date || "-"}</p>
+          </div>
+        `,
+        attachments: [
+          {
+            filename: `${invoice.invoice_number}.pdf`,
+            content: pdfBuffer
+          }
+        ]
+      });
+    } catch (mailError) {
+      await supabase
+        .from("invoices")
+        .update({
+          last_email_attempt_at: new Date().toISOString(),
+          last_email_error: mailError.message
+        })
+        .eq("id", invoice.id);
+
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Email failed: ${mailError.message}` })
+      };
+    }
+
+    const sentCount = Number(invoice.email_sent_count || 0) + 1;
 
     const { error: updateError } = await supabase
       .from("invoices")
       .update({
         status: "sent",
-        sent_at: new Date().toISOString()
+        sent_at: new Date().toISOString(),
+        last_email_attempt_at: new Date().toISOString(),
+        last_email_error: null,
+        email_sent_count: sentCount
       })
       .eq("id", invoice.id);
 
@@ -347,7 +389,10 @@ export async function handler(event) {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true })
+      body: JSON.stringify({
+        success: true,
+        message: "Invoice emailed successfully."
+      })
     };
   } catch (err) {
     return {

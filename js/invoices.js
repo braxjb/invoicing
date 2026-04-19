@@ -304,7 +304,8 @@ function getInvoicePayload() {
 }
 
 async function saveInvoice(sendAfterSave = false) {
-  formMessage.textContent = "Saving...";
+  formMessage.textContent = sendAfterSave ? "Saving invoice before sending..." : "Saving...";
+  formMessage.style.color = "#374151";
 
   const payload = getInvoicePayload();
   const invoiceId = document.getElementById("invoiceId").value;
@@ -328,42 +329,71 @@ async function saveInvoice(sendAfterSave = false) {
 
   if (error) {
     formMessage.textContent = error.message;
+    formMessage.style.color = "#dc2626";
     return;
   }
 
   if (sendAfterSave) {
-    formMessage.textContent = "Saved. Sending invoice...";
-    await sendInvoice(data.id);
+    const sent = await sendInvoice(data.id);
+    if (!sent) return;
   } else {
     formMessage.textContent = "Invoice saved successfully.";
+    formMessage.style.color = "#16a34a";
   }
 
   await loadInvoices();
-  setTimeout(() => closeDialog(), 500);
+  setTimeout(() => closeDialog(), 800);
 }
+
 
 async function sendInvoice(invoiceId) {
   const {
     data: { session }
   } = await supabaseClient.auth.getSession();
 
-  const response = await fetch("/.netlify/functions/send-invoice", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.access_token}`
-    },
-    body: JSON.stringify({ invoiceId })
-  });
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    formMessage.textContent = result.error || "Failed to send invoice.";
-    return;
+  if (!session) {
+    formMessage.textContent = "Your session has expired. Please log in again.";
+    formMessage.style.color = "#dc2626";
+    return false;
   }
 
-  formMessage.textContent = "Invoice sent successfully.";
+  const originalText = sendInvoiceBtn.textContent;
+  sendInvoiceBtn.disabled = true;
+  sendInvoiceBtn.textContent = "Sending...";
+  formMessage.textContent = "Generating PDF and sending invoice...";
+  formMessage.style.color = "#374151";
+
+  try {
+    const response = await fetch("/.netlify/functions/send-invoice", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ invoiceId })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      formMessage.textContent = result.error || "Failed to send invoice.";
+      formMessage.style.color = "#dc2626";
+      return false;
+    }
+
+    formMessage.textContent = result.message || "Invoice sent successfully.";
+    formMessage.style.color = "#16a34a";
+
+    await loadInvoices();
+    return true;
+  } catch (err) {
+    formMessage.textContent = `Unexpected error: ${err.message}`;
+    formMessage.style.color = "#dc2626";
+    return false;
+  } finally {
+    sendInvoiceBtn.disabled = false;
+    sendInvoiceBtn.textContent = originalText;
+  }
 }
 
 invoiceForm?.addEventListener("submit", async (e) => {
