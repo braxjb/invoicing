@@ -1,3 +1,4 @@
+import { supabaseClient } from "./supabase-client.js";
 
 const loginForm = document.getElementById("loginForm");
 const loginMessage = document.getElementById("loginMessage");

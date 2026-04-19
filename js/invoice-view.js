@@ -1,3 +1,4 @@
+import { supabaseClient } from "./supabase-client.js";
 
 const invoiceViewContent = document.getElementById("invoiceViewContent");
 
