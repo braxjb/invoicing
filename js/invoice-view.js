@@ -161,7 +161,6 @@ async function init() {
     `).join("")
     : `<tr><td colspan="4">No line items added.</td></tr>`;
 
-  const paymentTermsText = invoice.payment_terms || "Please remit the due amount before the mentioned due date.";
   const notesText = invoice.notes || "-";
 
   invoiceViewContent.innerHTML = `
@@ -195,9 +194,9 @@ async function init() {
       <div class="invoice-meta-layout">
         <div class="invoice-card">
           <h3>Contact Information</h3>
-          <p><strong>Serendib Escape Elite (Pvt) Ltd</strong></p>
-          <p>info@serendibescape.com</p>
-          <p>0781030655</p>
+          <p><strong>${escapeHtml(invoice.company_name || "Serendib Escape Elite (Pvt) Ltd")}</strong></p>
+          <p>${escapeHtml(invoice.company_email || "info@serendibescape.com")}</p>
+          <p>${escapeHtml(invoice.company_phone || "0781030655")}</p>
         </div>
 
         <div class="invoice-card invoice-meta-card">
@@ -265,24 +264,10 @@ async function init() {
         </div>
       </div>
 
-      <div class="invoice-lower-grid">
-        <div class="invoice-left-stack">
-          <div class="invoice-card">
-            <h3>Payment Instruction</h3>
-            <p>Please remit the due amount to the below mentioned bank account:</p>
-            <p><strong>A/C number:</strong> ${escapeHtml(invoice.bank_account_number || "8016719336")}</p>
-            <p><strong>Bank:</strong> ${escapeHtml(invoice.bank_name || "Commercial Bank")}</p>
-            <p><strong>Name:</strong> ${escapeHtml(invoice.bank_account_name || "Jonathan De Kauwe")}</p>
-            <p><strong>Payment Reference:</strong> ${escapeHtml(invoice.payment_reference || invoice.invoice_number || "-")}</p>
-          </div>
-
-          <div class="invoice-card">
-            <h3>Notes / Terms</h3>
-            <p><strong>Payment Terms:</strong></p>
-            <p>${nl2br(paymentTermsText)}</p>
-            <p style="margin-top:14px;"><strong>Notes:</strong></p>
-            <p>${nl2br(notesText)}</p>
-          </div>
+      <div class="invoice-lower-grid invoice-lower-grid-single">
+        <div class="invoice-card">
+          <h3>Notes / Terms</h3>
+          <p>${nl2br(notesText)}</p>
         </div>
 
         <div class="invoice-summary-box">

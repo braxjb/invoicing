@@ -436,11 +436,6 @@ body {
   padding-bottom: 0;
 }
 
-.invoice-left-stack {
-  display: grid;
-  gap: 20px;
-}
-
 .invoice-card,
 .invoice-summary-box,
 .invoice-amount-due {
@@ -649,5 +644,15 @@ body {
   .invoice-table tbody td {
     padding: 12px;
     font-size: 13px;
+  }
+}
+
+.invoice-lower-grid-single {
+  grid-template-columns: 1.2fr 0.8fr;
+}
+
+@media (max-width: 900px) {
+  .invoice-lower-grid-single {
+    grid-template-columns: 1fr;
   }
 }

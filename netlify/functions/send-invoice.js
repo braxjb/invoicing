@@ -433,41 +433,32 @@ async function buildInvoicePdf(invoice) {
     rowY -= isTotal ? 20 : 16;
   });
 
-  // PAYMENT INSTRUCTION AS SIDE NOTE
-  const paymentNoteX = MARGIN;
-  const paymentNoteY = rowY + 52;
-  const paymentNoteWidth = 290;
+  // NOTES / TERMS (USER-CONTROLLED ONLY)
+	let contentBottom = rowY - 10;
 
-  drawText("Payment Instruction", paymentNoteX, paymentNoteY, {
-    size: 10.5,
-    bold: true,
-    color: colors.muted,
-  });
+	if (invoice.notes) {
+	  contentBottom = ensureSpace(contentBottom, 80);
 
-  const paymentText = [
-    "Please remit the due amount to the below mentioned bank account:",
-    `A/C number: ${invoice.bank_account_number || "8016719336"}`,
-    `Bank: ${invoice.bank_name || "Commercial Bank"}`,
-    `Name: ${invoice.bank_account_name || "Jonathan De Kauwe"}`,
-    `Payment Reference: ${invoice.payment_reference || invoice.invoice_number || "-"}`,
-  ].join("\n");
+	  drawText("Notes / Terms", MARGIN, contentBottom, {
+		size: 10.5,
+		bold: true,
+		color: colors.muted,
+	  });
 
-  const paymentBottomY = drawWrappedText(paymentText, paymentNoteX, paymentNoteY - 18, paymentNoteWidth, {
-    size: 9,
-    lineHeight: 13,
-    color: colors.text,
-  });
+	  contentBottom -= 18;
 
-  let contentBottom = Math.min(rowY, paymentBottomY) - 8;
-
-  if (invoice.payment_terms && !invoice.notes) {
-    contentBottom = drawWrappedText(invoice.payment_terms, MARGIN, contentBottom, width - (MARGIN * 2), {
-      size: 9,
-      lineHeight: 13,
-      color: colors.text,
-    });
-  }
-
+	  contentBottom = drawWrappedText(
+		invoice.notes,
+		MARGIN,
+		contentBottom,
+		width - (MARGIN * 2),
+		{
+		  size: 9,
+		  lineHeight: 13,
+		  color: colors.text,
+		}
+	  );
+	}
   drawFooter(page);
 
   // TERMS PAGE
