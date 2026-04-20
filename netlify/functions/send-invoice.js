@@ -292,11 +292,11 @@ export async function handler(event) {
     } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: "Unauthorized" })
-      };
-    }
+	  return {
+		statusCode: 401,
+		body: JSON.stringify({ error: userError?.message || "Unauthorized" })
+	  };
+	}
 
     const { data: invoice, error: invoiceError } = await supabase
       .from("invoices")
