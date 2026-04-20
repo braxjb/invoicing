@@ -373,9 +373,17 @@ async function sendInvoice(invoiceId) {
       body: JSON.stringify({ invoiceId })
     });
 
-    const result = await response.json();
+    const rawText = await response.text();
+
+    let result;
+    try {
+      result = JSON.parse(rawText);
+    } catch {
+      result = { error: rawText };
+    }
 
     if (!response.ok) {
+      console.error("Function raw response:", rawText);
       formMessage.textContent = result.error || "Failed to send invoice.";
       formMessage.style.color = "#dc2626";
       return false;
