@@ -282,9 +282,8 @@ export async function handler(event) {
         body: JSON.stringify({ error: "Missing invoice ID" })
       };
     }
-	console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
-	console.log("ANON_KEY:", process.env.SUPABASE_ANON_KEY);
-	console.log("user:", process.env.SMTP_USER);
+	
+	
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_ANON_KEY,
@@ -360,25 +359,98 @@ export async function handler(event) {
 
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to: invoice.client_email,
-        subject: `Invoice ${invoice.invoice_number}`,
-        html: `
-          <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;">
-            <p>Dear ${invoice.client_name},</p>
-            <p>Please find your invoice attached.</p>
-            <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
-            <p><strong>Total:</strong> ${money(invoice.total, invoice.currency)}</p>
-            <p><strong>Due Date:</strong> ${invoice.due_date || "-"}</p>
-          </div>
-        `,
-        attachments: [
-          {
-            filename: `${invoice.invoice_number}.pdf`,
-            content: pdfBuffer
-          }
-        ]
-      });
+		  from: process.env.EMAIL_FROM,
+		  to: invoice.client_email,
+		  subject: `Invoice ${invoice.invoice_number} | Serendib Escapes Elite`,
+		  html: `
+		  <div style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:30px 0;">
+			
+			<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+
+			  <!-- Header -->
+			  <div style="background:#0f172a;color:#ffffff;padding:25px 30px;">
+				<h1 style="margin:0;font-size:20px;letter-spacing:0.5px;">
+				  Serendib Escapes Elite
+				</h1>
+				<p style="margin:5px 0 0;font-size:12px;color:#cbd5f5;">
+				  Luxury Tailor-Made Journeys Across Sri Lanka
+				</p>
+			  </div>
+
+			  <!-- Body -->
+			  <div style="padding:30px;">
+
+				<p style="font-size:14px;color:#1f2937;">
+				  Dear <strong>${invoice.client_name}</strong>,
+				</p>
+
+				<p style="font-size:14px;color:#4b5563;">
+				  Thank you for choosing <strong>Serendib Escapes Elite</strong>.
+				  Please find your invoice attached for your upcoming journey.
+				</p>
+
+				<!-- Invoice Box -->
+				<div style="margin:25px 0;padding:20px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+				  
+				  <p style="margin:0 0 10px;font-size:13px;color:#6b7280;">Invoice Details</p>
+
+				  <table style="width:100%;font-size:14px;color:#111827;">
+					<tr>
+					  <td style="padding:4px 0;">Invoice Number:</td>
+					  <td style="padding:4px 0;text-align:right;"><strong>${invoice.invoice_number}</strong></td>
+					</tr>
+					<tr>
+					  <td style="padding:4px 0;">Issue Date:</td>
+					  <td style="padding:4px 0;text-align:right;">${invoice.issue_date}</td>
+					</tr>
+					<tr>
+					  <td style="padding:4px 0;">Due Date:</td>
+					  <td style="padding:4px 0;text-align:right;">${invoice.due_date || "-"}</td>
+					</tr>
+					<tr>
+					  <td style="padding:10px 0 4px;font-weight:bold;">Total Amount:</td>
+					  <td style="padding:10px 0 4px;text-align:right;font-weight:bold;font-size:16px;color:#0f172a;">
+						${money(invoice.total, invoice.currency)}
+					  </td>
+					</tr>
+				  </table>
+				</div>
+
+				<!-- Message -->
+				<p style="font-size:14px;color:#4b5563;">
+				  Kindly review the attached invoice and proceed with payment by the due date.
+				  If you have any questions or require assistance, feel free to reach out to us.
+				</p>
+
+				<!-- CTA -->
+				<div style="margin:25px 0;">
+				  <p style="font-size:14px;color:#1f2937;margin-bottom:8px;">
+					Need assistance?
+				  </p>
+				  <p style="font-size:13px;color:#6b7280;margin:0;">
+					📧 support@serendibescapes.com<br/>
+					📞 +94 XX XXX XXXX
+				  </p>
+				</div>
+
+			  </div>
+
+			  <!-- Footer -->
+			  <div style="background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;">
+				Thank you for choosing Serendib Escapes Elite
+			  </div>
+
+			</div>
+
+		  </div>
+		  `,
+		  attachments: [
+			{
+			  filename: `${invoice.invoice_number}.pdf`,
+			  content: pdfBuffer
+			}
+		  ]
+		});
     } catch (mailError) {
       await supabase
         .from("invoices")
