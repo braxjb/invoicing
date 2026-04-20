@@ -283,7 +283,8 @@ export async function handler(event) {
       };
     }
 	console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
-	console.log("HAS_ANON_KEY:", !!process.env.SUPABASE_ANON_KEY);
+	console.log("ANON_KEY:", process.env.SUPABASE_ANON_KEY);
+	console.log("user:", process.env.SMTP_USER);
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_ANON_KEY,
