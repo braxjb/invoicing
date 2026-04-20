@@ -251,8 +251,12 @@ export async function handler(event) {
       };
     }
 
-    const authHeader = event.headers.authorization || "";
-    const token = authHeader.replace("Bearer ", "");
+    const authHeader =
+	  event.headers.authorization || event.headers.Authorization || "";
+
+	const token = authHeader.startsWith("Bearer ")
+	  ? authHeader.slice(7)
+	  : "";
 
     if (!token) {
       return {
@@ -285,7 +289,7 @@ export async function handler(event) {
     const {
       data: { user },
       error: userError
-    } = await supabase.auth.getUser();
+    } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
       return {
