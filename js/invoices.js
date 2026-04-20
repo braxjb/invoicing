@@ -374,6 +374,8 @@ async function sendInvoice(invoiceId) {
     });
 
     const rawText = await response.text();
+    console.log("send-invoice status:", response.status);
+    console.log("send-invoice raw response:", rawText);
 
     let result;
     try {
@@ -383,18 +385,17 @@ async function sendInvoice(invoiceId) {
     }
 
     if (!response.ok) {
-      console.error("Function raw response:", rawText);
-      formMessage.textContent = result.error || "Failed to send invoice.";
+      formMessage.textContent = result.error || `Failed to send invoice. Status ${response.status}`;
       formMessage.style.color = "#dc2626";
       return false;
     }
 
     formMessage.textContent = result.message || "Invoice sent successfully.";
     formMessage.style.color = "#16a34a";
-
     await loadInvoices();
     return true;
   } catch (err) {
+    console.error("sendInvoice error:", err);
     formMessage.textContent = `Unexpected error: ${err.message}`;
     formMessage.style.color = "#dc2626";
     return false;
@@ -403,6 +404,7 @@ async function sendInvoice(invoiceId) {
     sendInvoiceBtn.textContent = originalText;
   }
 }
+
 
 invoiceForm?.addEventListener("submit", async (e) => {
   e.preventDefault();

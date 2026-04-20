@@ -247,6 +247,9 @@ export async function handler(event) {
     if (event.httpMethod !== "POST") {
       return {
         statusCode: 405,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: "Method not allowed" })
       };
     }
@@ -261,6 +264,9 @@ export async function handler(event) {
     if (!token) {
       return {
         statusCode: 401,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: "Missing token" })
       };
     }
@@ -270,6 +276,9 @@ export async function handler(event) {
     if (!invoiceId) {
       return {
         statusCode: 400,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: "Missing invoice ID" })
       };
     }
@@ -294,6 +303,9 @@ export async function handler(event) {
     if (userError || !user) {
 	  return {
 		statusCode: 401,
+		headers: {
+			"Content-Type": "application/json"
+		},
 		body: JSON.stringify({ error: userError?.message || "Unauthorized" })
 	  };
 	}
@@ -307,6 +319,9 @@ export async function handler(event) {
     if (invoiceError || !invoice) {
       return {
         statusCode: 404,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: "Invoice not found" })
       };
     }
@@ -314,6 +329,9 @@ export async function handler(event) {
     if (invoice.created_by !== user.id) {
       return {
         statusCode: 403,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: "Forbidden" })
       };
     }
@@ -321,6 +339,9 @@ export async function handler(event) {
     if (invoice.sent_at || invoice.status === "sent") {
       return {
         statusCode: 409,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: "This invoice has already been sent." })
       };
     }
@@ -367,6 +388,9 @@ export async function handler(event) {
 
       return {
         statusCode: 500,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: `Email failed: ${mailError.message}` })
       };
     }
@@ -387,21 +411,31 @@ export async function handler(event) {
     if (updateError) {
       return {
         statusCode: 500,
+		headers: {
+			"Content-Type": "application/json"
+		},
         body: JSON.stringify({ error: updateError.message })
       };
     }
 
     return {
       statusCode: 200,
+	  headers: {
+		"Content-Type": "application/json"
+	  },
       body: JSON.stringify({
         success: true,
         message: "Invoice emailed successfully."
       })
     };
   } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message || "Unexpected error" })
-    };
-  }
+	  console.error("FUNCTION CRASH:", err);
+	  return {
+		statusCode: 500,
+		headers: {
+		  "Content-Type": "application/json"
+		},
+		body: JSON.stringify({ error: err.message || "Unexpected error" })
+	  };
+	}
 }
