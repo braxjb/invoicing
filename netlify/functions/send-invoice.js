@@ -775,7 +775,7 @@ async function buildInvoicePdf(invoice) {
 
   drawText(amountDueLabel, amountDueRightX - amountDueLabelWidth, y, {
     size: 10.5,
-    bold: true,
+    bold: false,
     color: colors.muted,
   });
 
