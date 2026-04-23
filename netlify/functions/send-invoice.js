@@ -1102,87 +1102,104 @@ export async function handler(event) {
 		  to: invoice.client_email,
 		  subject: `Invoice ${invoice.invoice_number} | Serendib Escapes Elite`,
 		  html: `
-		  <div style="font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;padding:30px 0;">
-			
-			<div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+			  <div style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+				<div style="max-width:620px;margin:0 auto;padding:32px 20px;">
+				  <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+					
+					<div style="padding:28px 32px;background:#0f172a;">
+					  <h1 style="margin:0;font-size:22px;line-height:1.3;color:#ffffff;font-weight:700;">
+						Serendib Escapes Elite
+					  </h1>
+					  <p style="margin:8px 0 0;font-size:13px;line-height:1.6;color:#cbd5e1;">
+						Invoice Notification
+					  </p>
+					</div>
 
-			  <!-- Header -->
-			  <div style="background:#0f172a;color:#ffffff;padding:25px 30px;">
-				<h1 style="margin:0;font-size:20px;letter-spacing:0.5px;">
-				  Serendib Escapes Elite
-				</h1>
-				<p style="margin:5px 0 0;font-size:12px;color:#cbd5f5;">
-				  Luxury Tailor-Made Journeys Across Sri Lanka
-				</p>
-			  </div>
+					<div style="padding:32px;">
+					  <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#111827;">
+						Dear ${invoice.client_name || "Valued Customer"},
+					  </p>
 
-			  <!-- Body -->
-			  <div style="padding:30px;">
+					  <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#374151;">
+						We hope you are doing well.
+					  </p>
 
-				<p style="font-size:14px;color:#1f2937;">
-				  Dear <strong>${invoice.client_name}</strong>,
-				</p>
+					  <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#374151;">
+						Please find attached your invoice <strong>${invoice.invoice_number || ""}</strong> from
+						<strong>Serendib Escapes Elite</strong>.
+					  </p>
 
-				<p style="font-size:14px;color:#4b5563;">
-				  Thank you for choosing <strong>Serendib Escapes Elite</strong>.
-				  Please find your invoice attached for your upcoming journey.
-				</p>
+					  <div style="margin:24px 0;padding:20px 22px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;">
+						<p style="margin:0 0 10px;font-size:13px;line-height:1.6;color:#6b7280;text-transform:uppercase;letter-spacing:0.04em;">
+						  Payment Summary
+						</p>
+						<table style="width:100%;border-collapse:collapse;">
+						  <tr>
+							<td style="padding:6px 0;font-size:14px;color:#4b5563;">Customer</td>
+							<td style="padding:6px 0;font-size:14px;color:#111827;text-align:right;font-weight:600;">
+							  ${invoice.client_name || "-"}
+							</td>
+						  </tr>
+						  <tr>
+							<td style="padding:6px 0;font-size:14px;color:#4b5563;">Invoice Number</td>
+							<td style="padding:6px 0;font-size:14px;color:#111827;text-align:right;font-weight:600;">
+							  ${invoice.invoice_number || "-"}
+							</td>
+						  </tr>
+						  <tr>
+							<td style="padding:6px 0;font-size:14px;color:#4b5563;">Due Date</td>
+							<td style="padding:6px 0;font-size:14px;color:#111827;text-align:right;font-weight:600;">
+							  ${invoice.due_date || "-"}
+							</td>
+						  </tr>
+						  <tr>
+							<td style="padding:10px 0 0;font-size:15px;color:#111827;font-weight:700;">Amount to be Paid</td>
+							<td style="padding:10px 0 0;font-size:18px;color:#0f172a;text-align:right;font-weight:700;">
+							  ${money(invoice.total, invoice.currency)}
+							</td>
+						  </tr>
+						</table>
+					  </div>
 
-				<!-- Invoice Box -->
-				<div style="margin:25px 0;padding:20px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
-				  
-				  <p style="margin:0 0 10px;font-size:13px;color:#6b7280;">Invoice Details</p>
+					  <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#374151;">
+						Kindly review the attached invoice and arrange payment on or before the due date.
+					  </p>
 
-				  <table style="width:100%;font-size:14px;color:#111827;">
-					<tr>
-					  <td style="padding:4px 0;">Invoice Number:</td>
-					  <td style="padding:4px 0;text-align:right;"><strong>${invoice.invoice_number}</strong></td>
-					</tr>
-					<tr>
-					  <td style="padding:4px 0;">Issue Date:</td>
-					  <td style="padding:4px 0;text-align:right;">${invoice.issue_date}</td>
-					</tr>
-					<tr>
-					  <td style="padding:4px 0;">Due Date:</td>
-					  <td style="padding:4px 0;text-align:right;">${invoice.due_date || "-"}</td>
-					</tr>
-					<tr>
-					  <td style="padding:10px 0 4px;font-weight:bold;">Total Amount:</td>
-					  <td style="padding:10px 0 4px;text-align:right;font-weight:bold;font-size:16px;color:#0f172a;">
-						${money(invoice.total, invoice.currency)}
-					  </td>
-					</tr>
-				  </table>
+					  ${
+						invoice.payment_terms
+						  ? `
+							<div style="margin:20px 0 0;padding:16px 18px;background:#fcfcfd;border-left:4px solid #cbd5e1;border-radius:6px;">
+							  <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:700;">
+								Payment Terms
+							  </p>
+							  <p style="margin:0;font-size:14px;line-height:1.7;color:#374151;">
+								${String(invoice.payment_terms).replace(/\n/g, "<br>")}
+							  </p>
+							</div>
+						  `
+						  : ""
+					  }
+
+					  <p style="margin:24px 0 0;font-size:15px;line-height:1.7;color:#374151;">
+						If you have any questions, please reply to this email and we will be happy to assist you.
+					  </p>
+
+					  <p style="margin:24px 0 0;font-size:15px;line-height:1.7;color:#111827;">
+						Kind regards,<br />
+						<strong>Serendib Escapes Elite</strong>
+					  </p>
+					</div>
+
+					<div style="padding:18px 32px;background:#f8fafc;border-top:1px solid #e5e7eb;">
+					  <p style="margin:0;font-size:12px;line-height:1.6;color:#6b7280;">
+						Serendib Escapes Elite<br />
+						Email: info@serendibescape.com | Phone: 0781030655
+					  </p>
+					</div>
+				  </div>
 				</div>
-
-				<!-- Message -->
-				<p style="font-size:14px;color:#4b5563;">
-				  Kindly review the attached invoice and proceed with payment by the due date.
-				  If you have any questions or require assistance, feel free to reach out to us.
-				</p>
-
-				<!-- CTA -->
-				<div style="margin:25px 0;">
-				  <p style="font-size:14px;color:#1f2937;margin-bottom:8px;">
-					Need assistance?
-				  </p>
-				  <p style="font-size:13px;color:#6b7280;margin:0;">
-					📧 support@serendibescapes.com<br/>
-					📞 +94 XX XXX XXXX
-				  </p>
-				</div>
-
 			  </div>
-
-			  <!-- Footer -->
-			  <div style="background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;">
-				Thank you for choosing Serendib Escapes Elite
-			  </div>
-
-			</div>
-
-		  </div>
-		  `,
+			`,
 		  attachments: [
 			{
 			  filename: `${invoice.invoice_number}.pdf`,
